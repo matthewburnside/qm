@@ -1,5 +1,7 @@
 %{
+#include "canonical.h"
 #include "canonical.tab.h"
+
 %}
 
 %%
@@ -14,9 +16,9 @@
 \([ \t]*              { return LP; }
 [ \t]*\)              { return RP; }
 
-[[:alnum:]]+          { sprintf(yylval.s, "%s", yytext); return TERM; }
-\"([^"\n]|\\["\n])*\" { sprintf(yylval.s, "%s", yytext); return TERM; }
-\'([^'\n]|\\['\n])*\' { sprintf(yylval.s, "%s", yytext); return TERM; }
+[[:alnum:]]+          { yylval.s = yytext; return TERM; }
+\"([^"\n]|\\["\n])*\" { yylval.s = yytext; return TERM; }
+\'([^'\n]|\\['\n])*\' { yylval.s = yytext; return TERM; }
 
 [ \t]+                { return WS; }
 

@@ -1,26 +1,21 @@
 CC   = gcc
 CFLAGS = -g
+LIBS = -lfl
 LEX    = flex
 YACC   = bison
 YFLAGS = -vtd
 
-BIN  = canonical
+all: canonical
 
-SRCS = $(BIN).y $(BIN).l
-OBJS = lex.yy.o $(BIN).tab.o
-LIBS = -lfl
+canonical: lex.yy.o canonical.tab.o
+	$(CC) $(CCFLAGS) $(LIBS) lex.yy.o canonical.tab.o -o canonical
 
-all: $(BIN)
+canonical.tab.h canonical.tab.c: canonical.y
+	$(YACC) $(YFLAGS) canonical.y  
 
-$(BIN): $(OBJS)
-	$(CC) $(CCFLAGS) $(OBJS) $(LIBS) -o $(BIN)
-
-$(BIN).tab.h $(BIN).tab.c: $(BIN).y
-	$(YACC) $(YFLAGS) $(BIN).y  
-
-lex.yy.c: $(BIN).l $(BIN).tab.h
-	$(LEX) $(BIN).l  # -d debug
+lex.yy.c: canonical.l canonical.tab.h
+	$(LEX) canonical.l  # -d debug
 
 clean:
-	rm -f $(OBJS) $(BIN) lex.yy.c $(BIN).tab.{c,h} $(BIN).output
+	rm -f canonical *.o canonical.tab.{c,h} lex.yy.c canonical.output
 
