@@ -23,18 +23,3 @@ struct bool {
 };
 
 #endif
-
-
-/* struct onion { */
-/*         in_addr_t               o_addr; */
-/*         in_port_t               o_port; */
-/*         u_int16_t               o_flags; */
-/*         char                    o_opts[6]; */
-/*         union { */
-/*                 char            os_layer[1]; */
-/*                 struct cryptbuf os_crypt; */
-/*         } ou_layer; */
-/* }; */
-/* #define o_layer ou_layer.os_layer */
-/* #define o_hdr   ou_layer.os_crypt.c_hdr */
-/* #define o_data  ou_layer.os_crypt.c_data */

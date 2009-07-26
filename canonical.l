@@ -6,20 +6,20 @@
 
 %%
 
-[ \t]*[\n]            { /* nothing */ }
-^[ \t]*               { /* nothing */ }
+[ \t]*[\n]                      { /* empty */ }
+^[ \t]*                         { /* empty */ }
 
-[ \t]+AND[ \t]+|[ \t]+and[ \t]+   { return AND; }
-[ \t]+OR[ \t]+|[ \t]+or[ \t]+     { return OR; }
+[ \t]+AND[ \t]+|[ \t]+and[ \t]+ { return AND; }
+[ \t]+OR[ \t]+|[ \t]+or[ \t]+   { return OR; }
 
--                     { return NOT; }
-\([ \t]*              { return LP; }
-[ \t]*\)              { return RP; }
+-                               { return NOT; }
+\([ \t]*                        { return LP; }
+[ \t]*\)                        { return RP; }
 
-[[:alnum:]]+          { yylval.s = yytext; return TERM; }
-\"([^"\n]|\\["\n])*\" { yylval.s = yytext; return TERM; }
-\'([^'\n]|\\['\n])*\' { yylval.s = yytext; return TERM; }
+[[:alnum:]]+                    { yylval.s = yytext; return TERM; }
+\"([^"\n]|\\["\n])*\"           { yylval.s = yytext; return TERM; }
+\'([^'\n]|\\['\n])*\'           { yylval.s = yytext; return TERM; }
 
-[ \t]+                { return WS; }
+[ \t]+                          { return WS; }
 
 %%
