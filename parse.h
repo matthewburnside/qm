@@ -1,12 +1,12 @@
-#ifndef _CANONICAL_H
-#define _CANONICAL_H
+#ifndef _SYMBOL_H
+#define _SYMBOL_H
 
 #define NSYMS 256
 
 struct symtab {
 	char *name;
 	char val; /* boolean! */
-} symtab[NSYMS];
+};
 
 enum bool_type { VAR, OR_EXPR, AND_EXPR, NOT_EXPR, PAREN_EXPR };
 
@@ -28,7 +28,7 @@ struct bool {
 	} u;
 };
 
-struct symtab * sym(char *s);
+struct symtab   *symbol(char *s);
 void            print_tree(struct bool *t);
 
 #endif

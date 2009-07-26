@@ -1,11 +1,11 @@
 %{
-#include "canonical.h"
+#include "parse.h"
 #include "canonical.tab.h"
+
 
 %}
 
 %%
-
 [ \t]*[\n]                      { /* empty */ }
 ^[ \t]*                         { /* empty */ }
 
@@ -16,9 +16,9 @@
 \([ \t]*                        { return LP; }
 [ \t]*\)                        { return RP; }
 
-[[:alnum:]]+                    { yylval.s = sym(yytext); return TERM; }
-\"([^"\n]|\\["\n])*\"           { yylval.s = sym(yytext); return TERM; }
-\'([^'\n]|\\['\n])*\'           { yylval.s = sym(yytext); return TERM; }
+[[:alnum:]]+                    { yylval.s = symbol(yytext); return TERM; }
+\"([^"\n]|\\["\n])*\"           { yylval.s = symbol(yytext); return TERM; }
+\'([^'\n]|\\['\n])*\'           { yylval.s = symbol(yytext); return TERM; }
 
 [ \t]+                          { return WS; }
 

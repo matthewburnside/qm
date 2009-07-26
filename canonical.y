@@ -2,13 +2,20 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "canonical.h"
+#include "parse.h"
+#include "truth.h"
 
 //int yydebug = 1;
 
 int	        yyerror(char *str);
 int	        yyparse(void);
 int	        yylex(void);
+
+struct bool     *tree;
+struct symtab   *symtab[NSYMS];
+int             simsiz = 0;
+
+struct truth    *truth;
 
 %}
 
@@ -33,8 +40,7 @@ int	        yylex(void);
 
 query   : { /* nothing */ }
         | expr {
-		print_tree($1);
-		printf("\n");
+		tree = $1;
         }
 ;
 
@@ -76,9 +82,11 @@ expr    : TERM {
 %%
 
 struct symtab *
-sym(char *s)
+symbol(char *s)
 {
 	struct symtab *sp;
+
+	printf("%d\n");
 
 	for (sp = symtab; sp < &symtab[NSYMS]; sp++) {
 	    if (sp->name && !strcmp(sp->name, s))
@@ -86,6 +94,7 @@ sym(char *s)
 
 	    if (!sp->name) {
 		sp->name = strdup(s);
+		simsiz++;
 		return sp;
 	    }
 	}
@@ -127,7 +136,19 @@ yyerror(char *str)
 int
 main(int argc, char *argv)
 {
+	int i;
+
 	yyparse();
+
+	print_tree(tree);
+	printf("\n");
+
+/* 	truth = truthtab(symsiz); */
+
+/* 	for (i = 0; i < truth->len; i++) { */
+/* 	    truth->tab[i] = evaluate(tree, assign(symtab, simsiz, truth, i)); */
+/* 	} */
+
 	return 0;
 }
 
