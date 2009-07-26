@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "parse.h"
-#include "truth.h"
+/* #include "truth.h" */
 
 //int yydebug = 1;
 
@@ -12,7 +12,7 @@ int	        yyparse(void);
 int	        yylex(void);
 
 struct bool     *tree;
-struct symtab   *symtab[NSYMS];
+struct symtab   symtab[NSYMS];
 int             simsiz = 0;
 
 struct truth    *truth;
@@ -85,8 +85,6 @@ struct symtab *
 symbol(char *s)
 {
 	struct symtab *sp;
-
-	printf("%d\n");
 
 	for (sp = symtab; sp < &symtab[NSYMS]; sp++) {
 	    if (sp->name && !strcmp(sp->name, s))
