@@ -22,5 +22,5 @@ lex.yy.c: $(BIN).l $(BIN).tab.h
 	$(LEX) $(BIN).l  # -d debug
 
 clean:
-	rm -f $(OBJS) $(BIN) lex.yy.c $(BIN).tab.h $(BIN).tab.c $(BIN).output
+	rm -f $(OBJS) $(BIN) lex.yy.c $(BIN).tab.{c,h} $(BIN).output
 
