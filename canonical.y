@@ -141,19 +141,13 @@ main(int argc, char *argv)
 	printf("\n");
 
 	truth = truthtab(symsiz);
-
-	printf("%d %d\n", truth->len, symsiz);
-
 	for (j = 0; j < symsiz; j++)
 	    printf("%s\t", symtab[j].name);
 
 	printf("eval\n");
-
 	for (i = 0; i < truth->len; i++) {
-
 	    for (j = 0; j < symsiz; j++)
 		printf("%d\t", get_val(i, j));
-	    
 	    truth->tab[i] = eval(tree, i);
 	    printf("%d\n", truth->tab[i]);
 	}
