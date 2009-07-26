@@ -15,6 +15,7 @@ struct bool {
 	union {
 		struct {
 			struct symtab *sym;
+			int i;
 		} var;
 
 		struct {

@@ -150,13 +150,12 @@ main(int argc, char *argv)
 	printf("val\n");
 
 	for (i = 0; i < truth->len; i++) {
-/* 	    truth->tab[i] = evaluate(tree, assign(symtab, simsiz, truth, i)); */
 
 	    for (j = 0; j < symsiz; j++)
 		printf("%d\t", get_val(i, j));
-
-	    printf("\n");
-/* 	    printf("%d\n", truthtab[i]); */
+	    
+	    truth->tab[i] = eval(tree, i);
+	    printf("%d\n", truth->tab[i]);
 	}
 
 	return 0;
