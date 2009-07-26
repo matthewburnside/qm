@@ -24,7 +24,5 @@ all:
 	make
 
 clean:
-	rm -f $(OBJS) $(BIN) lex.yy.c $(BIN).tab.h $(BIN).tab.c $(BIN).tar
+	rm -f $(OBJS) $(BIN) lex.yy.c $(BIN).tab.h $(BIN).tab.c $(BIN).output
 
-tar:
-	tar -cvf $(BIN).tar $(SRCS) Makefile 
