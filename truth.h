@@ -7,5 +7,6 @@ struct truth {
 };
 
 struct truth *truthtab(int len);
+int get_val(unsigned int tt_index, unsigned int sym_index);
 
 #endif

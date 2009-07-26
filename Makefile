@@ -25,8 +25,6 @@ lex.yy.c: canonical.l canonical.tab.h parse.h
 lex.yy.o: lex.yy.c
 	$(CC) $(CCFLAGS) -c lex.yy.c
 
-
-
 clean:
 	rm -f canonical truth *.o canonical.tab.{c,h} lex.yy.c canonical.output
 

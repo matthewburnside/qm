@@ -133,7 +133,7 @@ int
 main(int argc, char *argv)
 {
 	struct truth    *truth;
-	int i;
+	int i, j;
 
 	yyparse();
 
@@ -142,9 +142,22 @@ main(int argc, char *argv)
 
 	truth = truthtab(symsiz);
 
-/* 	for (i = 0; i < truth->len; i++) { */
+	printf("%d %d\n", truth->len, symsiz);
+
+	for (j = 0; j < symsiz; j++)
+	    printf("%s\t", symtab[j].name);
+
+	printf("val\n");
+
+	for (i = 0; i < truth->len; i++) {
 /* 	    truth->tab[i] = evaluate(tree, assign(symtab, simsiz, truth, i)); */
-/* 	} */
+
+	    for (j = 0; j < symsiz; j++)
+		printf("%d\t", get_val(i, j));
+
+	    printf("\n");
+/* 	    printf("%d\n", truthtab[i]); */
+	}
 
 	return 0;
 }
