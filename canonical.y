@@ -1,6 +1,6 @@
 %{
 #include <string.h>
-#include <unistd.h>
+#include <stdlib.h>
 
 #include "canonical.h"
 
@@ -9,7 +9,6 @@
 int	        yyerror(char *str);
 int	        yyparse(void);
 int	        yylex(void);
-void            print_tree(struct bool *t);
 
 %}
 
@@ -26,7 +25,7 @@ void            print_tree(struct bool *t);
 %left   AND WS
 
 %union {
-	char *s;
+	struct symtab *s;
 	struct bool *b;
 }
 
@@ -42,8 +41,7 @@ query   : { /* nothing */ }
 expr    : TERM {
 		$$ = (struct bool *)malloc(sizeof(struct bool));
 		$$->type = VAR;
-		$$->u.var.name = strdup($1);
-		$$->u.var.val = 0;
+		$$->u.var.sym = $1
         }
         | expr AND expr {
 		$$ = (struct bool *)malloc(sizeof(struct bool));
@@ -77,12 +75,30 @@ expr    : TERM {
 
 %%
 
+struct symtab *
+sym(char *s)
+{
+	struct symtab *sp;
+
+	for (sp = symtab; sp < &symtab[NSYMS]; sp++) {
+	    if (sp->name && !strcmp(sp->name, s))
+		return sp;
+
+	    if (!sp->name) {
+		sp->name = strdup(s);
+		return sp;
+	    }
+	}
+	yyerror("too many symbols");
+	exit(1);
+}
+
 void
 print_tree(struct bool *t)
 {
 	switch (t->type) {
 	case VAR:
-	    printf("%s", t->u.var.name);
+	    printf("%s", t->u.var.sym->name);
 	    break;
 	case OR_EXPR:
 	    print_tree(t->u.or.l); printf("+"); print_tree(t->u.or.r);
@@ -96,6 +112,9 @@ print_tree(struct bool *t)
 	case PAREN_EXPR:
 	    printf("("); print_tree(t->u.paren.b); printf(")");
 	    break;
+	default:
+	    yyerror("unknown type");
+	    exit(1);
 	}
 }
 
