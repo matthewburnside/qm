@@ -1,9 +1,9 @@
 %{
 #include "parse.h"
 #include "canonical.tab.h"
-
-
 %}
+
+%option noyywrap
 
 %%
 [ \t]*[\n]                      { /* empty */ }
