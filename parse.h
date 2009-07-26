@@ -5,7 +5,6 @@
 
 struct symtab {
 	char *name;
-	char val; /* boolean! */
 };
 
 enum bool_type { VAR, OR_EXPR, AND_EXPR, NOT_EXPR, PAREN_EXPR };
@@ -14,8 +13,7 @@ struct bool {
 	enum bool_type type;
 	union {
 		struct {
-			struct symtab *sym;
-			int i;
+			int sym;
 		} var;
 
 		struct {
@@ -29,7 +27,7 @@ struct bool {
 	} u;
 };
 
-struct symtab   *symbol(char *s);
+int             symbol(char *s);
 void            print_tree(struct bool *t);
 
 #endif

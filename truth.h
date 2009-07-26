@@ -9,7 +9,7 @@ struct truth {
 };
 
 struct truth *truthtab(int len);
-int get_val(unsigned int tt_index, unsigned int sym_index);
-int eval(struct bool *tree, int tt_index);
+unsigned int get_val(unsigned int tt_index, unsigned int sym_index);
+unsigned int eval(struct bool *tree, int tt_index);
 
 #endif

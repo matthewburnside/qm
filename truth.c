@@ -22,19 +22,19 @@ get_val(unsigned int tt_index, unsigned int sym_index)
 }
 
 unsigned int
-eval(struct bool *t, int tt_index)
+eval(struct bool *t, int tt_i)
 {
 	switch (t->type) {
 	case VAR:
-	    return get_val(tt_index, XXX);
+	    return get_val(tt_i, t->u.var.sym);
 	case OR_EXPR:
-	    return eval(t->u.or.l) | eval(t->u.or.r);
+	    return eval(t->u.or.l, tt_i) | eval(t->u.or.r, tt_i);
 	case AND_EXPR:
-	    return eval(t->u.and.l) & eval(t->u.and.r);
+	    return eval(t->u.and.l, tt_i) & eval(t->u.and.r, tt_i);
 	case NOT_EXPR:
-	    return eval(t->u.not.b) ^ 1;
+	    return eval(t->u.not.b, tt_i) ^ 1;
 	case PAREN_EXPR:
-	    return eval(t->u.paren.b);
+	    return eval(t->u.paren.b, tt_i);
 	default:
 	    yyerror("unknown type");
 	    exit(1);

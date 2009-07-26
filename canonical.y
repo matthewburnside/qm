@@ -30,7 +30,7 @@ int             symsiz = 0;
 %left   AND WS
 
 %union {
-	struct symtab *s;
+	int s;
 	struct bool *b;
 }
 
@@ -79,23 +79,23 @@ expr    : TERM {
 
 %%
 
-struct symtab *
+/* returns an index into the symbol table */
+int
 symbol(char *s)
 {
-	struct symtab *sp;
+	int i;
 
-	for (sp = symtab; sp < &symtab[NSYMS]; sp++) {
-	    if (sp->name && !strcmp(sp->name, s))
-		return sp;
+	for (i = 0; i < symsiz; i++)
+	    if (!strcmp(s, symtab[i].name))
+		return i;
 
-	    if (!sp->name) {
-		sp->name = strdup(s);
-		symsiz++;
-		return sp;
-	    }
+	if (symsiz >= NSYMS) {
+	    yyerror("too many symbols");
+	    exit(1);
 	}
-	yyerror("too many symbols");
-	exit(1);
+
+	symtab[symsiz++].name = strdup(s);
+	return symsiz-1;
 }
 
 void
@@ -103,7 +103,7 @@ print_tree(struct bool *t)
 {
 	switch (t->type) {
 	case VAR:
-	    printf("%s", t->u.var.sym->name);
+	    printf("%s", symtab[t->u.var.sym]);
 	    break;
 	case OR_EXPR:
 	    print_tree(t->u.or.l); printf("+"); print_tree(t->u.or.r);
@@ -147,7 +147,7 @@ main(int argc, char *argv)
 	for (j = 0; j < symsiz; j++)
 	    printf("%s\t", symtab[j].name);
 
-	printf("val\n");
+	printf("eval\n");
 
 	for (i = 0; i < truth->len; i++) {
 
