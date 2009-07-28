@@ -7,11 +7,14 @@ YFLAGS = -vtd
 
 all: minbool
 
-minbool: lex.yy.o minbool.tab.o truth.o
+minbool: lex.yy.o minbool.tab.o truth.o qm.o
 	$(CC) $(CCFLAGS) $(LIBS) lex.yy.o minbool.tab.o truth.o -o minbool
 
 truth.o: truth.c truth.h
 	$(CC) $(CCFLAGS) -c truth.c
+
+qm.o: qm.c qm.h
+	$(CC) $(CCFLAGS) -c qm.c
 
 minbool.tab.h minbool.tab.c: minbool.y parse.h truth.h
 	$(YACC) $(YFLAGS) minbool.y  

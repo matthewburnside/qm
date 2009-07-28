@@ -10,18 +10,18 @@ truthtab(int len)
 
 	t = malloc(sizeof(struct truth));
 	t->len = 1 << len;
-	t->tab = malloc((1 << len) * sizeof(char));
+	t->tab = malloc((1 << len) * sizeof(unsigned char));
 
 	return t;
 }
 
-unsigned int
+unsigned char
 get_val(unsigned int tt_index, unsigned int sym_index)
 {
 	return (tt_index & (1 << sym_index) ? 1 : 0);
 }
 
-unsigned int
+unsigned char
 eval(struct bool *t, int tt_i)
 {
 	switch (t->type) {
