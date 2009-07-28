@@ -8,7 +8,7 @@ YFLAGS = -vtd
 all: minbool
 
 minbool: lex.yy.o minbool.tab.o truth.o qm.o
-	$(CC) $(CCFLAGS) $(LIBS) lex.yy.o minbool.tab.o truth.o -o minbool
+	$(CC) $(CCFLAGS) $(LIBS) lex.yy.o minbool.tab.o truth.o qm.o -o minbool
 
 truth.o: truth.c truth.h
 	$(CC) $(CCFLAGS) -c truth.c

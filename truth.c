@@ -4,13 +4,14 @@
 #include "truth.h"
 
 struct truth *
-truthtab(int len)
+truthtab(int vars)
 {
 	struct truth *t;
 
 	t = malloc(sizeof(struct truth));
-	t->len = 1 << len;
-	t->tab = malloc((1 << len) * sizeof(unsigned char));
+	t->len = 1 << vars;
+	t->vars = vars;
+	t->tab = malloc((t->len) * sizeof(unsigned char));
 
 	return t;
 }

@@ -4,8 +4,9 @@
 #include "parse.h"
 
 struct truth {
-	unsigned char *tab;
-	int len;
+     unsigned char *tab;
+     int len;
+     int vars;
 };
 
 struct truth    *truthtab(int len);
