@@ -1,30 +1,30 @@
 CC   = gcc
 CFLAGS = -g
-LIBS = -lfl
+LIBS =
 LEX    = flex
 YACC   = bison
 YFLAGS = -vtd
 
-all: canonical
+all: minbool
 
-canonical: lex.yy.o canonical.tab.o truth.o
-	$(CC) $(CCFLAGS) $(LIBS) lex.yy.o canonical.tab.o truth.o -o canonical
+minbool: lex.yy.o minbool.tab.o truth.o
+	$(CC) $(CCFLAGS) $(LIBS) lex.yy.o minbool.tab.o truth.o -o minbool
 
 truth.o: truth.c truth.h
 	$(CC) $(CCFLAGS) -c truth.c
 
-canonical.tab.h canonical.tab.c: canonical.y parse.h truth.h
-	$(YACC) $(YFLAGS) canonical.y  
+minbool.tab.h minbool.tab.c: minbool.y parse.h truth.h
+	$(YACC) $(YFLAGS) minbool.y  
 
-canonical.tab.o: canonical.tab.c
-	$(CC) $(CCFLAGS) -c canonical.tab.c	
+minbool.tab.o: minbool.tab.c
+	$(CC) $(CCFLAGS) -c minbool.tab.c	
 
-lex.yy.c: canonical.l canonical.tab.h parse.h
-	$(LEX) canonical.l  # -d debug
+lex.yy.c: lex.l minbool.tab.h parse.h
+	$(LEX) lex.l  # -d debug
 
 lex.yy.o: lex.yy.c
 	$(CC) $(CCFLAGS) -c lex.yy.c
 
 clean:
-	rm -f canonical truth *.o canonical.tab.{c,h} lex.yy.c canonical.output
+	rm -f minbool truth *.o minbool.tab.{c,h} lex.yy.c minbool.output
 
