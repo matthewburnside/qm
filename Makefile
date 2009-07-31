@@ -5,10 +5,10 @@ LEX    = flex
 YACC   = bison
 YFLAGS = -vtd
 
-all: minbool
+all: qm
 
-minbool: lex.yy.o minbool.tab.o truth.o qm.o
-	$(CC) $(CCFLAGS) $(LIBS) lex.yy.o minbool.tab.o truth.o qm.o -o minbool
+qm: lex.yy.o parse.tab.o truth.o qm.o
+	$(CC) $(CCFLAGS) $(LIBS) lex.yy.o parse.tab.o truth.o qm.o -o qm
 
 truth.o: truth.c truth.h
 	$(CC) $(CCFLAGS) -c truth.c
@@ -16,18 +16,18 @@ truth.o: truth.c truth.h
 qm.o: qm.c qm.h
 	$(CC) $(CCFLAGS) -c qm.c
 
-minbool.tab.h minbool.tab.c: minbool.y parse.h truth.h
-	$(YACC) $(YFLAGS) minbool.y  
+parse.tab.h parse.tab.c: parse.y parse.h truth.h
+	$(YACC) $(YFLAGS) parse.y  
 
-minbool.tab.o: minbool.tab.c
-	$(CC) $(CCFLAGS) -c minbool.tab.c	
+parse.tab.o: parse.tab.c
+	$(CC) $(CCFLAGS) -c parse.tab.c	
 
-lex.yy.c: lex.l minbool.tab.h parse.h
+lex.yy.c: lex.l parse.tab.h parse.h
 	$(LEX) lex.l  # -d debug
 
 lex.yy.o: lex.yy.c
 	$(CC) $(CCFLAGS) -c lex.yy.c
 
 clean:
-	rm -f minbool truth *.o minbool.tab.{c,h} lex.yy.c minbool.output
+	rm -f qm truth *.o parse.tab.{c,h} lex.yy.c parse.output
 

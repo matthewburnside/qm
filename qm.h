@@ -3,6 +3,6 @@
 
 #include "truth.h"
 
-struct truth *qm(struct truth *truth);
+struct expr *qm(struct expr *expr, struct symtab *symtab, int symlen);
 
 #endif

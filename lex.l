@@ -1,6 +1,6 @@
 %{
 #include "parse.h"
-#include "minbool.tab.h"
+#include "parse.tab.h"
 %}
 
 %option noyywrap

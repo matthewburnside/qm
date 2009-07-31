@@ -9,8 +9,13 @@ struct truth {
      int vars;
 };
 
-struct truth    *truthtab(int len);
-unsigned char   get_val(unsigned int tt_index, unsigned int sym_index);
-unsigned char   eval(struct bool *tree, int tt_index);
+/* allocation a truth table with vars variables */
+struct truth    *truthtab(int vars);
+
+/* return bit bit from truth table entry */
+unsigned char   tt_bit(unsigned int entry, unsigned int bit);
+
+/* evaluate expr using values from truth table entry tt_e */
+unsigned char   eval(struct expr *tree, int tt_index);
 
 #endif

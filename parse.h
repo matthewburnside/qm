@@ -4,30 +4,30 @@
 #define NSYMS 256
 
 struct symtab {
-	char *name;
+     char *name;
 };
 
-enum bool_type { VAR, OR_EXPR, AND_EXPR, NOT_EXPR, PAREN_EXPR };
+enum expr_type { VAR, OR_EXPR, AND_EXPR, NOT_EXPR, PAREN_EXPR };
 
-struct bool {
-	enum bool_type type;
+struct expr {
+	enum expr_type type;
 	union {
 		struct {
 			int sym;
 		} var;
 
 		struct {
-			struct bool *l;
-			struct bool *r;
+			struct expr *l;
+			struct expr *r;
 		} and, or;
 
 		struct {
-			struct bool *b;
+			struct expr *b;
 		} not, paren;
 	} u;
 };
 
 int             symbol(char *s);
-void            print_tree(struct bool *t);
+void            print_tree(struct expr *t);
 
 #endif
