@@ -3,20 +3,18 @@
 #include <stdlib.h>
 
 #include "parse.h"
-/* #include "truth.h" */
 #include "qm.h"
 
 //int yydebug = 1;
+     
+int	        yyerror(char *str);
+int	        yyparse(void);
 
-     int	        yyerror(char *str);
-     int	        yyparse(void);
-     int	        yylex(void);
+struct expr     *expr;
+struct symtab   symtab[NSYMS];
+int             symlen = 0;
 
-     struct expr     *expr;
-     struct symtab   symtab[NSYMS];
-     int             symlen = 0;
-
-     %}
+%}
 
 %token	<s> TERM
 %token  AND OR
@@ -26,9 +24,9 @@
 
 %type   <b> query expr
 
-%left   OR
-%left   AND WS
-%nonassoc   NOT
+%left           OR
+%left           AND WS
+%nonassoc       NOT
 
 
 %union {
@@ -76,7 +74,7 @@ expr
 
 %%
 
-  /* returns an index into the symbol table */
+/* returns an index into the symbol table */
 int
 symbol(char *s)
 {

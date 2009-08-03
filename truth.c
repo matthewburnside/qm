@@ -4,22 +4,41 @@
 #include "truth.h"
 
 struct truth *
-truthtab(int vars)
+truthtab(struct expr *expr, struct symtab *symtab, int symlen)
 {
-	struct truth *t;
+	struct truth *t = (struct truth *)malloc(sizeof(struct truth));
+	int i;
 
-	t = malloc(sizeof(struct truth));
-	t->len = 1 << vars;
-	t->vars = vars;
-	t->tab = malloc((t->len) * sizeof(unsigned char));
+	t->symtab = symtab;
+	t->vars = symlen;
+	t->entries = 1 << symlen;
+	t->tab = (unsigned char *)malloc((t->entries) * sizeof(unsigned char));
+
+	for (i = 0; i < t->entries; i++)
+	     t->tab[i] = eval(expr, i);
 
 	return t;
+}
+
+void
+print_tt(struct truth *tt)
+{
+     int i, j;
+
+     for (j = 0; j < tt->vars; j++)
+	  printf("%s\t", tt->symtab[j].name);
+     printf("f()\n");
+     for (i = 0; i < tt->entries; i++) {
+	  for (j = 0; j < tt->vars; j++)
+	       printf("%d\t", tt_bit(i, j));
+	  printf("%d\n", tt->tab[i]);
+     }
 }
 
 unsigned char
 tt_bit(unsigned int entry, unsigned int bit)
 {
-	return (entry & (1 << bit) ? 1 : 0);
+     return (entry & (1 << bit) ? 1 : 0);
 }
 
 unsigned char

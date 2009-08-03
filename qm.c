@@ -2,12 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "parse.h"
 #include "qm.h"
+#include "truth.h"
+#include "parse.h"
 
-#define ONE  0x1
-#define ZERO 0x0
-#define DC   0x2
 
 struct term {
      char *v;
@@ -23,13 +21,10 @@ TAILQ_HEAD(term_list, term);
 struct term *
 new_term(int len)
 {
-     struct term *p;
-
-     p = (struct term *)malloc(sizeof(struct term));
+     struct term *p = (struct term *)malloc(sizeof(struct term));
      p->v = malloc(len * sizeof(char));
      p->len = len;
      p->mark = 0;
-
      return p;
 }
 
@@ -40,6 +35,7 @@ free_term(struct term *term)
      free(term);
 }
 
+/* return the valth minterm of truth */
 struct term *
 get_term(struct truth *truth, int val)
 {
@@ -56,18 +52,16 @@ get_term(struct truth *truth, int val)
 /* returns # of non-matching bits between p and q, or -1 if p and q
  * cannot be compared. */
 int
-term_match(struct term *p, struct term *q)
+term_cmp(struct term *p, struct term *q)
 {
      int i, diff = 0;
 
      if (p->len != q->len)
 	  return -1;
      for (i = 0; i < p->len; i++) {
-	  /* ignore matching DCs */
-	  if (p->v[i] == DC && q->v[i] == DC)
+	  if (p->v[i] == DC && q->v[i] == DC)       /* ignore matching DCs */
 	       continue;
-	  /* non-match is fail */
-	  if (!(p->v[i] == DC) ^ !(q->v[i] == DC))
+	  if (!(p->v[i] == DC) ^ !(q->v[i] == DC))  /* non-match is fail   */
 	       return -1;
 	  if (p->v[i] != q->v[i])
 	       diff++;
@@ -83,7 +77,7 @@ term_merge(struct term *p, struct term *q)
      struct term *t;
      int i, m;
 
-     if (term_match(p, q) != 1)
+     if (term_cmp(p, q) != 1)
 	  return NULL;
      
      t = new_term(p->len);
@@ -103,7 +97,8 @@ print_term(struct term *term) {
 
      printf("%s ", term->mark == 1 ? "" : "*");
      for (i = 0; i < term->len; i++)
-	  printf("%d ", term->v[i]);
+	  printf("%s ", (term->v[i]) == 0 ? "0" :
+	       (term->v[i] == 1 ? "1" : "-"));
 }
 
 void
@@ -124,7 +119,7 @@ get_terms(struct truth *truth, struct term_list *terms)
      struct term *p;
      int i, j, pn = 0;
 
-     for (i = 0; i < truth->len; i++)
+     for (i = 0; i < truth->entries; i++)
 	  if (truth->tab[i]) {
 	       p = get_term(truth, i);
 	       TAILQ_INSERT_TAIL(terms, p, entry);
@@ -142,13 +137,7 @@ reduce(struct term_list *from, struct term_list *to)
      int len = 0;
      
      for (p = TAILQ_FIRST(from); p; p = TAILQ_NEXT(p, entry)) {	  
-	  if (p->mark)
-	       continue;
-
 	  for (q = TAILQ_NEXT(p, entry); q; q = TAILQ_NEXT(q, entry)) {	       
-	       if (q->mark)
-		    continue;
-	       
 	       if ((t = term_merge(p, q)) != NULL) {
 		    p->mark = q->mark = 1;
 		    TAILQ_INSERT_TAIL(to, t, entry);
@@ -162,29 +151,28 @@ reduce(struct term_list *from, struct term_list *to)
 
 
 
-
+#define PASS_MAX 128
 struct truth *
-blah(struct truth *truth)
+pass1(struct truth *truth)
 {
-     struct term_list terms[128];
+     struct term_list termtab[PASS_MAX];
      struct term *term;
-     int i;
+     int i, n;
      int c0, c1;
 
-     TAILQ_INIT(&terms[0]);
-     c0 = get_terms(truth, &terms[0]);
-     printf("\n%d terms:\n", c0);
-     print_terms(&terms[0]);
-
+     TAILQ_INIT(&termtab[0]);
+     n = get_terms(truth, &termtab[0]);
+     printf("\n%d terms:\n", n);
+     print_terms(&termtab[0]);
 
      for (i = 1; i < 128; i++) {
-	  TAILQ_INIT(&terms[i]);
+	  TAILQ_INIT(&termtab[i]);
 
-	  c1 = reduce(&terms[i-1], &terms[i]);
+	  c1 = reduce(&termtab[i-1], &termtab[i]);
 	  printf("\n%d reduced terms:\n", c1);
-	  print_terms(&terms[i]);
+	  print_terms(&termtab[i]);
 
-	  if (c0 == c1)
+	  if (c1 == 0)
 	       break;
 
 	  c0 = c1;
@@ -192,9 +180,9 @@ blah(struct truth *truth)
 
      printf("\nReduced list:\n");
      for (i = 0; i < 128; i++) {
-	  if (TAILQ_FIRST(&terms[i]) == NULL)
+	  if (TAILQ_FIRST(&termtab[i]) == NULL)
 	       break;
-	  TAILQ_FOREACH(term, &terms[i], entry) {
+	  TAILQ_FOREACH(term, &termtab[i], entry) {
 	       if (!term->mark) {
 		    print_term(term);
 		    printf("\n");
@@ -203,7 +191,9 @@ blah(struct truth *truth)
      }
 
      return NULL;
+
 }
+
 
 /*
 
@@ -217,23 +207,11 @@ qm(struct expr *expr, struct symtab *symtab, int symlen)
      struct truth *truth;
      int i, j;
 
-     /* generate the truth table */
-     truth = truthtab(symlen);
-     for (i = 0; i < truth->len; i++)
-	  truth->tab[i] = eval(expr, i);
+     truth = truthtab(expr, symtab, symlen);
+     print_tt(truth);
 
-     /* print the truth table */
-     for (j = 0; j < symlen; j++)
-	  printf("%s\t", symtab[j].name);
-     printf("eval\n");
-     for (i = 0; i < truth->len; i++) {
-	  for (j = 0; j < symlen; j++)
-	       printf("%d\t", tt_bit(i, j));
-	  printf("%d\n", truth->tab[i]);
-     }
-
+     pass1(truth);
 
      return NULL;
-/*      printf("a\n"); fflush(stdout); */
 
 }
