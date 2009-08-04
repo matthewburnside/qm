@@ -8,19 +8,6 @@
 #include "parse.h"
 
 
-struct term {
-     char *v;
-     int bits;
-     int mark;
-     int cover[128];
-     int cover_len;
-     TAILQ_ENTRY(term) entry;
-};
-
-TAILQ_HEAD(term_list, term);
-
-
-
 struct term *
 new_term(int bits)
 {
@@ -32,89 +19,39 @@ new_term(int bits)
      return p;
 }
 
-void
-free_term(struct term *term)
-{
-     free(term->v);
-     free(term);
-}
-
-/* return the valth minterm of truth */
-struct term *
-get_term(struct truth *truth, int val)
-{
-     struct term *p;
-     int i;
-
-     p = new_term(truth->vars);
-     for (i = 0; i < truth->vars; i++)
-	  p->v[i] = tt_bit(val, i);     
-
-     return p;
-}
-
-/* returns # of non-matching bits between p and q, or -1 if p and q
- * cannot be compared. */
-int
-term_match(struct term *p, struct term *q)
-{
-     int i, diff = 0;
-
-     if (p->bits != q->bits)
-	  return -1;
-     for (i = 0; i < p->bits; i++) {
-	  if (p->v[i] == DC && q->v[i] == DC)       /* ignore matching DCs */
-	       continue;
-	  if (!(p->v[i] == DC) ^ !(q->v[i] == DC))  /* non-match is fail   */
-	       return -1;
-	  if (p->v[i] != q->v[i])
-	       diff++;
-     }
-     return diff;
-}
-
-/* returns 1 if p and q are equal, 0 otherwise. */
-int
-term_cmp(struct term *p, struct term *q)
-{
-     int i;
-
-     if (p->bits != q->bits)
-	  return 0;
-
-     for (i = 0; i < p->bits; i++)
-	  if (p->v[i] != q->v[i])
-	       return 0;
-
-     return 1;
-}
-
 
 /* returns a merge of p and q, or NULL if a merge cannot be made */
 struct term *
 term_merge(struct term *p, struct term *q)
 {
      struct term *t;
-     int i, m;
+     int i, m, diff = 0;
 
-     if (term_match(p, q) != 1)
+     /* can a match be made? */
+     if (p->bits != q->bits)
+	  return NULL;
+     for (i = 0; i < p->bits; i++) {
+	  if (p->v[i] == DC && q->v[i] == DC) /* ignore matching DCs */
+	       continue;
+	  if (!(p->v[i] == DC) ^ !(q->v[i] == DC)) /* non-match is fail   */
+	       return NULL;
+	  if (p->v[i] != q->v[i])
+	       diff++;
+     }
+     if (diff != 1)
 	  return NULL;
      
+     /* create the new term */
      t = new_term(p->bits);
-
      for (i = 0; i < p->bits; i++)
 	  if (p->v[i] == q->v[i])
 	       t->v[i] = p->v[i];
 	  else
 	       t->v[i] = DC;
-
      for (i = 0; i < p->cover_len; i++)
 	  t->cover[t->cover_len++] = p->cover[i];
-
      for (i = 0; i < q->cover_len; i++)
 	  t->cover[t->cover_len++] = q->cover[i];
-
-
      return t;
 }
 
@@ -157,30 +94,37 @@ minterms(struct truth *truth, struct term_list *minterms)
 
      for (i = 0; i < truth->entries; i++)
 	  if (truth->tab[i]) {
-	       p = get_term(truth, i);
+	       p = new_term(truth->vars);
+	       for (j = 0; j < truth->vars; j++)
+		    p->v[j] = tt_bit(i, j);     	       
 	       p->cover[p->cover_len++] = i;
 	       TAILQ_INSERT_TAIL(minterms, p, entry);
 	       pn++;
 	  }
-
      return pn;
 }
      
 
 int
-reduce(struct term_list *from, struct term_list *to)
+list_merge(struct term_list *from, struct term_list *to)
 {
      struct term *p, *q, *r, *t;
-     int len = 0, dup;
+     int len = 0, dup, i;
 
-     for (p = TAILQ_FIRST(from); p; p = TAILQ_NEXT(p, entry)) {	  
+     TAILQ_FOREACH(p, from, entry) {
 	  for (q = TAILQ_NEXT(p, entry); q; q = TAILQ_NEXT(q, entry)) {	       
 	       if ((t = term_merge(p, q)) != NULL) {
 		    p->mark = q->mark = 1;
-		    dup = 0;
 
+		    /* have we already made a merge like this one? */
+		    dup = 0;
 		    TAILQ_FOREACH(r, to, entry) {
-			 if (term_cmp(t, r) == 1) {
+			 if (t->bits != r->bits)
+			      continue;
+			 i = 0;
+			 while (t->v[i] == r->v[i] && i < t->bits)
+			      i++;
+			 if (i == t->bits) {
 			      dup = 1;
 			      break;
 			 }
@@ -217,12 +161,9 @@ prime_implicants(struct term_list *minterms, struct term_list *primes)
 
      for (i = 1; i < PASS_MAX; i++) {
 	  TAILQ_INIT(&termtab[i]);
-	  c1 = reduce(&termtab[i-1], &termtab[i]);
+	  c1 = list_merge(&termtab[i-1], &termtab[i]);
 	  if (c1 == 0)
 	       break;
-
-	  printf("\n%d reduced terms:\n", c1);
-	  print_terms(&termtab[i]);
 	  c0 = c1;
      }
 
@@ -246,61 +187,13 @@ prime_implicants(struct term_list *minterms, struct term_list *primes)
      return n;
 }
 
-void
-find_essentials(struct term_list *minterms,
-     int minterms_len,
-     struct term_list *primes,
-     int primes_len)
-{
-
-     struct term *term;
-     unsigned char **primetab;
-     int i, j;
-
-     printf("b: %d, %d\n", primes_len, minterms_len); fflush(stdout);
-
-     primetab = (unsigned char **)calloc(primes_len, sizeof(unsigned char *));
-     for (i = 0; i < primes_len; i++)
-	  primetab[i] = (unsigned char *)calloc(minterms_len,
-	       sizeof(unsigned char));
-
-     printf("c\n\n"); fflush(stdout);
-
-     i = 0;
-     TAILQ_FOREACH(term, primes, entry) {
-	  i++;
-
-	  print_term(term);
-	  printf("  ");
-	  printf("%d", term->cover_len);
-	  printf("\n");
-
-	 
-/* 	  for (j = 0; j < term->cover_len; j++) { */
-/* 	       printf("  %d %d\n", i, term->cover[j]); fflush(stdout); */
-/* 	       primetab[i][term->cover[j]] = 1; */
-
-/* 	  } */
-
-     }
-
-     printf("x\n"); fflush(stdout);
-
-     for (i = 0; i < primes_len; i++) {
-	  for (j = 0; j < minterms_len; j++)
-	       printf("%s\t", primetab[i][j] == 1 ? "X" : "");
-	  printf("\n");
-     }
-
-     printf("y\n"); fflush(stdout);
-}
 
 int
 reduce_primes(struct term_list *minterms,
-              int minterms_len,
-              struct term_list *primes,
-              int primes_len,
-              struct term_list *reduced)
+     int minterms_len,
+     struct term_list *primes,
+     int primes_len,
+     struct term_list *reduced)
 {
      struct term *term, *p, *q;
      int i, j, k, n = primes_len, ret = 0;
@@ -402,55 +295,30 @@ struct expr *
 qm(struct expr *expr, struct symtab *symtab, int symlen)
 {
      struct truth *truth;
-     struct term_list minterms_l, primes_l, reduced_l;
+     struct term_list terms, primes, reduced;
      int mn, pn, rn;
 
      truth = truthtab(expr, symtab, symlen);
-     print_tt(truth);
+ /*     print_tt(truth); */
 
-     TAILQ_INIT(&minterms_l);
-     mn = minterms(truth, &minterms_l);
-     printf("\n%d minterms:\n", mn);
-     print_terms(&minterms_l);
+     TAILQ_INIT(&terms);
+     mn = minterms(truth, &terms);
+/*      printf("\n%d minterms:\n", mn); */
+/*      print_terms(&terms); */
      
 
-     TAILQ_INIT(&primes_l);
-     pn = prime_implicants(&minterms_l, &primes_l);
-     printf("\n%d primes:\n", pn);
-     print_terms(&primes_l);
+     TAILQ_INIT(&primes);
+     pn = prime_implicants(&terms, &primes);
+/*      printf("\n%d primes:\n", pn); */
+/*      print_terms(&primes); */
 
 
-     TAILQ_INIT(&reduced_l);
-     rn = reduce_primes(&minterms_l, mn, &primes_l, pn, &reduced_l);
-     printf("\n%d reduced:\n", rn);
-     print_terms(&reduced_l);
+     TAILQ_INIT(&reduced);
+     rn = reduce_primes(&terms, mn, &primes, pn, &reduced);
+/*      printf("\n%d reduced:\n", rn); */
+/*      print_terms(&reduced); */
           
      printf("\n");
-     return build_expr(&reduced_l);
+     return build_expr(&reduced);
 
 }
-
-/*
-
-clear && ./qm "(-a*-b*-c*-d)+(-a*c*d)+(a*b*-c)+(a*b*-d)+(b*c*d)"
-
-clear && ./qm "(-d*-c*-b*-a)+(-d*-c*b*-a)+(d*-c*-b*-a)+(-d*c*-b*a)+(-d*c*b*-a)+(d*-c*b*-a)+(d*c*-b*-a)+(-d*c*b*a)+(d*c*-b*a)+(d*c*b*-a)+(d*c*b*a)"
-
-
-
- 0 -d*-c*-b*-a
- 2 -d*-c* b*-a
- 8  d*-c*-b*-a
- 5 -d* c*-b* a
- 6 -d* c* b*-a
-10  d*-c* b*-a
-12  d* c*-b*-a
- 7 -d* c* b* a
-13  d* c*-b* a
-14  d* c* b*-a
-15  d* c* b* a
-
- 
-
-
-*/
