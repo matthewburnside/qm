@@ -29,5 +29,6 @@ struct expr {
 
 int             symbol(char *s);
 void            print_tree(struct expr *t);
+struct expr *   new_expr(enum expr_type type);
 
 #endif

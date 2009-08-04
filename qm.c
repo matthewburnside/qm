@@ -143,7 +143,6 @@ list_merge(struct term_list *from, struct term_list *to)
 
 
 #define PASS_MAX 128
-
 int
 prime_implicants(struct term_list *minterms, struct term_list *primes)
 {
@@ -180,20 +179,24 @@ prime_implicants(struct term_list *minterms, struct term_list *primes)
 	       }
 	  }
      }
-
-     
      /* XXX: free termtab */
-
      return n;
 }
 
 
 int
-reduce_primes(struct term_list *minterms,
+prime_implicants2(struct term_list *minterms, struct term_list *primes)
+{
+     
+}
+
+
+int
+min_cover(struct term_list *minterms,
      int minterms_len,
      struct term_list *primes,
      int primes_len,
-     struct term_list *reduced)
+     struct term_list *cover)
 {
      struct term *term, *p, *q;
      int i, j, k, n = primes_len, ret = 0;
@@ -206,7 +209,7 @@ reduce_primes(struct term_list *minterms,
 	  }
 
 	  TAILQ_REMOVE(primes, p, entry);
-	  TAILQ_INSERT_HEAD(reduced, p, entry);
+	  TAILQ_INSERT_HEAD(cover, p, entry);
 	  ret++;
 	  n--;
 
@@ -235,15 +238,110 @@ reduce_primes(struct term_list *minterms,
 }
 
 
+
 struct expr *
-build_expr(struct term_list *reduced)
+build_expr(struct term_list *list)
+{
+     struct expr *root, *seedling, *p, *q;
+     struct term *term;
+     int i;
+
+     root = NULL;
+     TAILQ_FOREACH(term, list, entry) {
+	  seedling = NULL;
+	  for (i = 0; i < term->bits; i++) {
+	       switch (term->v[i]) {
+	       case ZERO:
+		    q = new_expr(VAR);		    
+		    q->u.var.sym = i;
+		    p = new_expr(NOT_EXPR);
+		    p->u.not.b = q;
+		    break;
+	       case ONE:
+		    p = new_expr(VAR);
+		    p->u.var.sym = i;
+		    break;
+	       case DC:
+		    continue;
+	       }
+
+	       if (seedling) {
+		    q = new_expr(AND_EXPR);
+		    q->u.and.l = seedling;
+		    q->u.and.r = p;
+		    seedling = q;
+	       } else
+		    seedling = p;
+	  }
+
+	  q = new_expr(PAREN_EXPR);
+	  q->u.paren.b = seedling;
+	  seedling = q;
+
+	  printf("\n\n");
+	  print_expr(seedling);
+	  printf("\n\n");
+
+	  if (root) {
+	       p = new_expr(OR_EXPR);
+	       p->u.or.l = root;
+	       p->u.or.r = q;
+	       root = p;
+	  } else
+	       root = seedling;
+     }
+     return root;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+struct expr *
+build_expr2(struct term_list *list)
 {
      struct expr *root, *p, *q, *parent;
      struct term *term;
      int i;
 
      root = NULL;
-     TAILQ_FOREACH(term, reduced, entry) {
+     TAILQ_FOREACH(term, list, entry) {
 
 	  parent = NULL;
 	  for (i = 0; i < term->bits; i++) {
@@ -295,30 +393,30 @@ struct expr *
 qm(struct expr *expr, struct symtab *symtab, int symlen)
 {
      struct truth *truth;
-     struct term_list terms, primes, reduced;
+     struct term_list terms, primes, cover;
      int mn, pn, rn;
 
      truth = truthtab(expr, symtab, symlen);
- /*     print_tt(truth); */
+     print_tt(truth);
 
      TAILQ_INIT(&terms);
      mn = minterms(truth, &terms);
-/*      printf("\n%d minterms:\n", mn); */
-/*      print_terms(&terms); */
+     printf("\n%d minterms:\n", mn);
+     print_terms(&terms);
      
 
      TAILQ_INIT(&primes);
      pn = prime_implicants(&terms, &primes);
-/*      printf("\n%d primes:\n", pn); */
-/*      print_terms(&primes); */
+     printf("\n%d primes:\n", pn);
+     print_terms(&primes);
 
 
-     TAILQ_INIT(&reduced);
-     rn = reduce_primes(&terms, mn, &primes, pn, &reduced);
-/*      printf("\n%d reduced:\n", rn); */
-/*      print_terms(&reduced); */
+     TAILQ_INIT(&cover);
+     rn = min_cover(&terms, mn, &primes, pn, &cover);
+     printf("\n%d cover:\n", rn);
+     print_terms(&cover);
           
      printf("\n");
-     return build_expr(&reduced);
+     return build_expr(&cover);
 
 }

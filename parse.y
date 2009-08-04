@@ -74,7 +74,7 @@ expr
 
 %%
 
-/* returns an index into the symbol table */
+/* lookup s in the symbol table.  returns an index into the table */
 int
 symbol(char *s)
 {
@@ -93,6 +93,14 @@ symbol(char *s)
      return symlen-1;
 }
 
+
+struct expr *
+new_expr(enum expr_type type) {
+     struct expr *expr = (struct expr *)malloc(sizeof(struct expr));
+     expr->type = type;
+
+     return expr;
+}
 
 void
 print_expr(struct expr *t)
