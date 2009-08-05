@@ -149,8 +149,6 @@ main(int argc, char *argv[])
 	  yy_scan_string(argv[1]);
 
      yyparse();
-/*      print_expr(expr); */
-/*      printf("\n"); */
 
      reduce = qm(expr, symtab, symlen);
      print_expr(reduce);
@@ -158,4 +156,3 @@ main(int argc, char *argv[])
 
      return 0;
 }
-

@@ -46,7 +46,6 @@ term_merge(struct term *p, struct term *q)
      struct term *t;
      int i, m, diff = 0;
 
-     /* can a match be made? */
      if (p->bits != q->bits)
 	  return NULL;
      for (i = 0; i < p->bits; i++) {
@@ -75,6 +74,7 @@ term_merge(struct term *p, struct term *q)
 }
 
 
+/* merge terms in from and store them in to.  return lenth of to.  */
 int
 list_merge(struct term_list *from, struct term_list *to)
 {
@@ -130,6 +130,7 @@ prime_implicants(struct term_list *minterms, struct term_list *primes)
      tp->tl.tqh_first = minterms->tqh_first;
      tp->tl.tqh_last = minterms->tqh_last;
 
+     /* list_merge() each column to create next column.  */
      tq = tp;
      do {
 	  tp = tq;
@@ -251,20 +252,15 @@ build_expr(struct term_list *list)
 void
 print_term(struct term *term) {
      int i;
-
-     printf("(");
+     printf("( ");
      for (i = 0; i < term->cover_len; i++) {
 	  printf("%d ", term->cover[i]);
      }
      printf(")\t\t");
-
      for (i = 0; i < term->bits; i++) {
 	  printf("%s ", (term->v[i]) == 0 ? "0" :
 	       (term->v[i] == 1 ? "1" : "-"));
      }
-
-     printf("%s ", term->mark == 1 ? "" : "*");
-
 }
 
 
@@ -272,7 +268,6 @@ void
 print_terms(struct term_list *terms) {
      struct term *term;
      int i;
-
      TAILQ_FOREACH(term, terms, entry) {
 	  print_term(term);
 	  printf("\n");
@@ -287,27 +282,17 @@ qm(struct expr *expr, struct symtab *symtab, int symlen)
      struct term_list terms, primes, cover;
      int mn, pn, rn;
 
-     truth = truthtab(expr, symtab, symlen);
-     print_tt(truth);
-
      TAILQ_INIT(&terms);
-     mn = minterms(truth, &terms);
-     printf("\n%d minterms:\n", mn);
-     print_terms(&terms);
-     
-
      TAILQ_INIT(&primes);
-     pn = prime_implicants(&terms, &primes);
-     printf("\n%d primes:\n", pn);
-     print_terms(&primes);
-
-
      TAILQ_INIT(&cover);
-     rn = min_cover(&primes, pn, &cover);
-     printf("\n%d cover:\n", rn);
-     print_terms(&cover);
-          
-     printf("\n");
-     return build_expr(&cover);
 
+     truth = truthtab(expr, symtab, symlen);
+
+     mn = minterms(truth, &terms);
+     pn = prime_implicants(&terms, &primes);
+     rn = min_cover(&primes, pn, &cover);
+     
+     return build_expr(&cover);
 }
+
+
