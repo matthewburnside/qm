@@ -20,6 +20,25 @@ new_term(int bits)
 }
 
 
+int
+minterms(struct truth *truth, struct term_list *minterms)
+{
+     struct term *p;
+     int i, j, pn = 0;
+
+     for (i = 0; i < truth->entries; i++)
+	  if (truth->tab[i]) {
+	       p = new_term(truth->vars);
+	       for (j = 0; j < truth->vars; j++)
+		    p->v[j] = tt_bit(i, j);     	       
+	       p->cover[p->cover_len++] = i;
+	       TAILQ_INSERT_TAIL(minterms, p, entry);
+	       pn++;
+	  }
+     return pn;
+}
+
+
 /* returns a merge of p and q, or NULL if a merge cannot be made */
 struct term *
 term_merge(struct term *p, struct term *q)
@@ -55,55 +74,6 @@ term_merge(struct term *p, struct term *q)
      return t;
 }
 
-void
-print_term(struct term *term) {
-     int i;
-
-     printf("(");
-     for (i = 0; i < term->cover_len; i++) {
-	  printf("%d ", term->cover[i]);
-     }
-     printf(")\t\t");
-
-     for (i = 0; i < term->bits; i++) {
-	  printf("%s ", (term->v[i]) == 0 ? "0" :
-	       (term->v[i] == 1 ? "1" : "-"));
-     }
-
-     printf("%s ", term->mark == 1 ? "" : "*");
-
-}
-
-void
-print_terms(struct term_list *terms) {
-     struct term *term;
-     int i;
-
-     TAILQ_FOREACH(term, terms, entry) {
-	  print_term(term);
-	  printf("\n");
-     }
-}
-
-
-int
-minterms(struct truth *truth, struct term_list *minterms)
-{
-     struct term *p;
-     int i, j, pn = 0;
-
-     for (i = 0; i < truth->entries; i++)
-	  if (truth->tab[i]) {
-	       p = new_term(truth->vars);
-	       for (j = 0; j < truth->vars; j++)
-		    p->v[j] = tt_bit(i, j);     	       
-	       p->cover[p->cover_len++] = i;
-	       TAILQ_INSERT_TAIL(minterms, p, entry);
-	       pn++;
-	  }
-     return pn;
-}
-     
 
 int
 list_merge(struct term_list *from, struct term_list *to)
@@ -141,36 +111,36 @@ list_merge(struct term_list *from, struct term_list *to)
 }
 
 
-
-#define PASS_MAX 128
 int
 prime_implicants(struct term_list *minterms, struct term_list *primes)
 {
-     struct term_list termtab[PASS_MAX];
+     struct tl_entry {
+	  struct term_list tl;
+	  TAILQ_ENTRY(tl_entry) entry;
+     } *tp, *tq;
+     TAILQ_HEAD(term_table, tl_entry) termtab;
      struct term *term, *cp;
-     int i, n;
-     int c0, c1;
+     int i = 0, n;
 
-     TAILQ_INIT(&termtab[0]);
-     TAILQ_FOREACH(term, minterms, entry) {
-	  cp = (struct term *)malloc(sizeof(struct term));
-	  memcpy(cp, term, sizeof(struct term));
-	  TAILQ_INSERT_TAIL(&termtab[0], cp, entry);
-     }
+     TAILQ_INIT(&termtab);
 
-     for (i = 1; i < PASS_MAX; i++) {
-	  TAILQ_INIT(&termtab[i]);
-	  c1 = list_merge(&termtab[i-1], &termtab[i]);
-	  if (c1 == 0)
-	       break;
-	  c0 = c1;
-     }
+     /* minterm list is first column of the prime table */
+     tp = (struct tl_entry *)malloc(sizeof(struct tl_entry));
+     TAILQ_INIT(&tp->tl);
+     tp->tl.tqh_first = minterms->tqh_first;
+     tp->tl.tqh_last = minterms->tqh_last;
+
+     tq = tp;
+     do {
+	  tp = tq;
+	  tq = (struct tl_entry *)malloc(sizeof(struct tl_entry));
+	  TAILQ_INIT(&tq->tl);
+	  TAILQ_INSERT_TAIL(&termtab, tq, entry);
+     } while (list_merge(&tp->tl, &tq->tl) != 0);
 
      n = 0;
-     for (i = 0; i < PASS_MAX; i++) {
-	  if (TAILQ_FIRST(&termtab[i]) == NULL)
-	       break;
-	  TAILQ_FOREACH(term, &termtab[i], entry) {
+     TAILQ_FOREACH(tp, &termtab, entry) {
+	  TAILQ_FOREACH(term, &tp->tl, entry) {
 	       if (!term->mark) {
 		    n++;
 		    cp = (struct term *)malloc(sizeof(struct term));
@@ -185,18 +155,7 @@ prime_implicants(struct term_list *minterms, struct term_list *primes)
 
 
 int
-prime_implicants2(struct term_list *minterms, struct term_list *primes)
-{
-     
-}
-
-
-int
-min_cover(struct term_list *minterms,
-     int minterms_len,
-     struct term_list *primes,
-     int primes_len,
-     struct term_list *cover)
+min_cover(struct term_list *primes, int primes_len, struct term_list *cover)
 {
      struct term *term, *p, *q;
      int i, j, k, n = primes_len, ret = 0;
@@ -238,7 +197,6 @@ min_cover(struct term_list *minterms,
 }
 
 
-
 struct expr *
 build_expr(struct term_list *list)
 {
@@ -278,10 +236,6 @@ build_expr(struct term_list *list)
 	  q->u.paren.b = seedling;
 	  seedling = q;
 
-	  printf("\n\n");
-	  print_expr(seedling);
-	  printf("\n\n");
-
 	  if (root) {
 	       p = new_expr(OR_EXPR);
 	       p->u.or.l = root;
@@ -294,100 +248,37 @@ build_expr(struct term_list *list)
 }
 
 
+void
+print_term(struct term *term) {
+     int i;
+
+     printf("(");
+     for (i = 0; i < term->cover_len; i++) {
+	  printf("%d ", term->cover[i]);
+     }
+     printf(")\t\t");
+
+     for (i = 0; i < term->bits; i++) {
+	  printf("%s ", (term->v[i]) == 0 ? "0" :
+	       (term->v[i] == 1 ? "1" : "-"));
+     }
+
+     printf("%s ", term->mark == 1 ? "" : "*");
+
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-struct expr *
-build_expr2(struct term_list *list)
-{
-     struct expr *root, *p, *q, *parent;
+void
+print_terms(struct term_list *terms) {
      struct term *term;
      int i;
 
-     root = NULL;
-     TAILQ_FOREACH(term, list, entry) {
-
-	  parent = NULL;
-	  for (i = 0; i < term->bits; i++) {
-	       if (term->v[i] == DC)
-		    continue;
-
-	       p = (struct expr *)malloc(sizeof(struct expr));
-	       p->type = VAR;
-	       p->u.var.sym = i;
-	       
-	       if (term->v[i] == ZERO) {
-		    q = p;
-		    p = (struct expr *)malloc(sizeof(struct expr));
-		    p->type = NOT_EXPR;
-		    p->u.not.b = q;
-	       }
-
-	       if (parent == NULL)
-		    parent = p;
-	       else {
-		    q = (struct expr *)malloc(sizeof(struct expr));
-		    q->type = AND_EXPR;
-		    q->u.and.l = parent;
-		    q->u.and.r = p;
-		    parent = q;
-	       }
-	  }
-
-	  p = (struct expr *)malloc(sizeof(struct expr));
-	  p->type = PAREN_EXPR;
-	  p->u.paren.b = parent;
-	  parent = p;
-
-	  if (root == NULL)
-	       root = parent;
-	  else {
-	       q = (struct expr *)malloc(sizeof(struct expr));
-	       q->type = OR_EXPR;
-	       q->u.or.l = root;
-	       q->u.or.r = p;
-	       root = q;
-	  }
+     TAILQ_FOREACH(term, terms, entry) {
+	  print_term(term);
+	  printf("\n");
      }
-
-     return root;
 }
+
 
 struct expr *
 qm(struct expr *expr, struct symtab *symtab, int symlen)
@@ -412,7 +303,7 @@ qm(struct expr *expr, struct symtab *symtab, int symlen)
 
 
      TAILQ_INIT(&cover);
-     rn = min_cover(&terms, mn, &primes, pn, &cover);
+     rn = min_cover(&primes, pn, &cover);
      printf("\n%d cover:\n", rn);
      print_terms(&cover);
           
