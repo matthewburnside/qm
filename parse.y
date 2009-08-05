@@ -28,7 +28,6 @@ int             symlen = 0;
 %left           AND WS
 %nonassoc       NOT
 
-
 %union {
      int s;
      struct expr *b;
@@ -44,30 +43,25 @@ query   : { /* nothing */ }
 
 expr
 : TERM {
-     $$ = (struct expr *)malloc(sizeof(struct expr));
-     $$->type = VAR;
+     $$ = new_expr(VAR);
      $$->u.var.sym = $1;
 }
 | expr AND expr {
-     $$ = (struct expr *)malloc(sizeof(struct expr));
-     $$->type = AND_EXPR;
+     $$ = new_expr(AND_EXPR);
      $$->u.and.l = $1;
      $$->u.and.r = $3;
 }
 | expr OR expr {
-     $$ = (struct expr *)malloc(sizeof(struct expr));
-     $$->type = OR_EXPR;
+     $$ = new_expr(OR_EXPR);
      $$->u.or.l = $1;
      $$->u.or.r = $3;
 }
 | NOT expr {
-     $$ = (struct expr *)malloc(sizeof(struct expr));
-     $$->type = NOT_EXPR;
+     $$ = new_expr(NOT_EXPR);
      $$->u.not.b = $2;
 }
 | LP expr RP {
-     $$ = (struct expr *)malloc(sizeof(struct expr));
-     $$->type = PAREN_EXPR;
+     $$ = new_expr(PAREN_EXPR);
      $$->u.paren.b = $2;
 }
 ;
@@ -137,6 +131,7 @@ int
 yyerror(char *str)
 {
      printf("%s\n", str);
+     exit(1);
 }
 
 

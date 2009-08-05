@@ -187,13 +187,11 @@ min_cover(struct term_list *primes, int primes_len, struct term_list *cover)
 				   TAILQ_REMOVE(primes, term, entry);
 				   n--;
 			      }
-
 			 }
 		    }
 	       }
 	  }
      }
-
      return ret;
 }
 
