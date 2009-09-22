@@ -5,32 +5,32 @@
 #include "parse.h"
 #include "qm.h"
 
-    //int yydebug = 1;
+//int yydebug = 1;
 
-    int     yyerror(char *str);
-    int     yyparse(void);
+int     yyerror(char *str);
+int     yyparse(void);
 
-    struct expr     *expr;
-    struct symtab   symtab[NSYMS];
-    int             symlen = 0;
-    %}
+struct expr     *expr;
+struct symtab   symtab[NSYMS];
+int             symlen = 0;
+%}
 
-    %token	<s> TERM
-    %token  AND OR
-    %token  LP RP
-    %token  NOT
-    %token  WS
+%token	<s> TERM
+%token  AND OR
+%token  LP RP
+%token  NOT
+%token  WS
 
-    %type   <b> query expr
+%type   <b> query expr
 
-    %left       OR
-    %left       AND WS
-    %nonassoc   NOT
+%left       OR
+%left       AND WS
+%nonassoc   NOT
 
-    %union {
-        int             s;
-        struct expr *   b;
-    }
+%union {
+    int             s;
+    struct expr *   b;
+}
 
 %%
 
@@ -106,24 +106,24 @@ print_expr(struct expr *t)
     }
 
     switch (t->type) {
-        case VAR:
-            printf("%s", symtab[t->u.var.sym]);
-            break;
-        case OR_EXPR:
-            print_expr(t->u.or.l); printf("+"); print_expr(t->u.or.r);
-            break;
-        case AND_EXPR:
-            print_expr(t->u.and.l); printf("*"); print_expr(t->u.and.r);
-            break;
-        case NOT_EXPR:
-            printf("-"); print_expr(t->u.not.b);
-            break;
-        case PAREN_EXPR:
-            printf("("); print_expr(t->u.paren.b); printf(")");
-            break;
-        default:
-            yyerror("unknown type");
-            exit(1);
+    case VAR:
+        printf("%s", symtab[t->u.var.sym]);
+        break;
+    case OR_EXPR:
+        print_expr(t->u.or.l); printf("+"); print_expr(t->u.or.r);
+        break;
+    case AND_EXPR:
+        print_expr(t->u.and.l); printf("*"); print_expr(t->u.and.r);
+        break;
+    case NOT_EXPR:
+        printf("-"); print_expr(t->u.not.b);
+        break;
+    case PAREN_EXPR:
+        printf("("); print_expr(t->u.paren.b); printf(")");
+        break;
+    default:
+        yyerror("unknown type");
+        exit(1);
     }
 }
 
