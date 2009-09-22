@@ -12,7 +12,7 @@ struct term *
 new_term(int bits)
 {
     struct term *p = (struct term *)malloc(sizeof(struct term));
-    p->v = malloc(bits * sizeof(char));
+    p->v = (char *)malloc(bits * sizeof(char));
     p->bits = bits;
     p->mark = 0;
     p->cover_len = 0;
@@ -92,7 +92,7 @@ list_merge(struct term_list *from, struct term_list *to)
                     if (t->bits != r->bits)
                         continue;
                     i = 0;
-                    while (t->v[i] == r->v[i] && i < t->bits)
+                    while (i < t->bits && t->v[i] == r->v[i])
                         i++;
                     if (i == t->bits) {
                         dup = 1;
