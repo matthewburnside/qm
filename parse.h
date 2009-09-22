@@ -4,7 +4,7 @@
 #define NSYMS 256
 
 struct symtab {
-    char *name;
+    char    *name;
 };
 
 enum expr_type { VAR, OR_EXPR, AND_EXPR, NOT_EXPR, PAREN_EXPR };
