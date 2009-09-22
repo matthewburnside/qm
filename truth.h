@@ -8,16 +8,14 @@
 #define DC   2
 
 struct truth {
-     struct symtab *symtab;
-     int vars;
-     int entries;
-     unsigned char *tab;
+    struct symtab *symtab;
+    int vars;
+    int entries;
+    unsigned char *tab;
 };
 
 /* allocate a truth table with symlen variables */
-struct truth    *truthtab(struct expr *expr,
-                          struct symtab *symtab,
-                          int symlen);
+struct truth *  truthtab(struct expr *expr, struct symtab *symtab, int symlen);
 
 /* return bit bit from truth table entry */
 unsigned char   tt_bit(unsigned int entry, unsigned int bit);
