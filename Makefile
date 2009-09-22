@@ -18,4 +18,3 @@ lex.yy.c: lex.l parse.tab.h parse.h
 
 clean:
 	rm -f qm truth *.o parse.tab.{c,h} lex.yy.c parse.output
-
